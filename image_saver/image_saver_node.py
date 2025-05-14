@@ -12,7 +12,7 @@ class ImageSaver(Node):
         super().__init__('image_saver')
         self.subscription = self.create_subscription(
             Image,
-            '/output',  # o il topic corretto da camera_ros
+            '/camera/image_raw',  # o il topic corretto da camera_ros
             self.listener_callback,
             10)
         self.bridge = CvBridge()
