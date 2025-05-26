@@ -49,6 +49,7 @@ def generate_launch_description():
                 "width": 640,
                 "height": 480,
                 "format": format_param,
+                "FrameDurationLimits": [500000,500000], # set fixed framerate of 2 Hz (500 ms)
             }],
             extra_arguments=[{'use_intra_process_comms': True}],
         ),
@@ -56,7 +57,7 @@ def generate_launch_description():
     ]
 
     # optionally add ImageViewNode to show camera image
-    if has_resource("packages", "image_view"):
+    '''if has_resource("packages", "image_view"):
         composable_nodes += [
             ComposableNode(
                 package='image_view',
@@ -64,7 +65,7 @@ def generate_launch_description():
                 remappings=[('/image', '/camera/image_raw')],
                 extra_arguments=[{'use_intra_process_comms': True}],
             ),
-        ]
+        ]'''
 
     # composable nodes in single container
     container = ComposableNodeContainer(
@@ -83,6 +84,6 @@ def generate_launch_description():
             package='image_saver',
             executable='image_saver',
             name='image_saver_node',
-            output='screen'
+            output='screen',
         ),
     ])
