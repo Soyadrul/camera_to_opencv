@@ -6,11 +6,12 @@ import cv2
 import os
 import time
 import subprocess
+import PIL
 
 username = os.environ.get('USERNAME') or os.environ.get('USER') or os.environ.get('LOGNAME') # Get the username of the current user
 import sys
 sys.path.append(f'/home/{username}/ros2_ws/src/wasr_deploy')
-import predict_single
+import predict_ros_adaptation
 
 class ImageSaver(Node):
     def __init__(self):
@@ -22,42 +23,23 @@ class ImageSaver(Node):
             10)
         self.bridge = CvBridge()
         self.last_saved_time = 0
-        self.save_interval = 60  # Seconds between 2 images
+        self.save_interval = 50 # Seconds between 2 images
         self.image_counter = 1
-        self.output_dir = f'/home/{username}/camera_images'
-        weights_101 = f'/home/{username}/ros2_ws/src/wasr_deploy/weights/wasr_rn101.pth'
-        os.makedirs(self.output_dir, exist_ok=True)
 
     def listener_callback(self, msg):
         now = time.time()
         if now - self.last_saved_time >= self.save_interval:
             self.last_saved_time = now
-            try:
-                cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
-                image_path = os.path.join(self.output_dir, f'{self.image_counter}.jpg')
-                cv2.imwrite(image_path, cv_image)
-                self.get_logger().info(f'Saved image {image_path}')
-                
-                output_absolute_path = f"/home/{username}/ros2_ws/src/wasr_deploy/output/predictions/out_{self.image_counter}.jpg"
-                predict_single.main(weights = weights_101, image_path = image_path, output_path = output_absolute_path) #self.run_python_script(image_path)
-                self.image_counter += 1
-            except Exception as e:
-                self.get_logger().error(f'Error saving image: {e}')
-
-    '''def run_python_script(self, image_path):
-        output_path = f'/home/{username}/ros2_ws/src/wasr_deploy/output/predictions/out_{self.image_counter}.jpg'
-        command = [
-            'python3',
-            f'/home/{username}/ros2_ws/src/wasr_deploy/predict_single.py',
-            '--weight', f'/home/{username}/ros2_ws/src/wasr_deploy/weights/wasr_rn101.pth',
-            image_path,
-            output_path
-        ]
-        try:
-            subprocess.run(command, check=True)
-            self.get_logger().info(f'Processed image with WASR: {output_path}')
-        except subprocess.CalledProcessError as e:
-            self.get_logger().error(f'Error running WASR script: {e}')'''
+            
+            cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
+            
+            image_to_process = self.cv_to_pil(cv_image)
+            predict_ros_adaptation.predict(image_to_process)
+            self.image_counter += 1
+            
+    def cv_to_pil(self, cv2_image):
+        image_rgb = cv2.cvtColor(cv2_image, cv2.COLOR_BGR2RGB)
+        return PIL.Image.fromarray(image_rgb)
 
 def main(args=None):
     rclpy.init(args=args)
