@@ -1,5 +1,6 @@
 import rclpy
 from rclpy.node import Node
+from rclpy.parameter import Parameter
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 import cv2
@@ -16,6 +17,11 @@ import predict_ros_adaptation
 class ImageSaver(Node):
     def __init__(self):
         super().__init__('image_saver')
+        
+        # Declare the parameter 'save_image'
+        self.declare_parameter('save_image', Parameter.Type.BOOL)
+        self.save_image_enabled = self.get_parameter('save_image').value
+        
         self.subscription = self.create_subscription(
             Image,
             '/camera/image_raw',  # The correct camera_ros topic
@@ -36,7 +42,7 @@ class ImageSaver(Node):
         self.processing = True
         cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8') # Convert the image from a ROS2 message to a cv2 image
         image_to_process = self.cv_to_pil(cv_image) # Convert the cv2 image to a PIL image
-        self.save_image(image_to_process) # Save the image in a folder (COMMENT THIS LINE IF YOU DON'T WANT TO SAVE THE IMAGE)
+        self.save_image(image_to_process) # Save the image in a folder
         self.process_image(image_to_process)
         self.processing = False
         
@@ -55,6 +61,11 @@ class ImageSaver(Node):
     
     # Function to save the image locally inside a folder
     def save_image(self, image):
+        # Skip this function execution if the shouldn't be saved
+        if not self.save_image_enabled:
+            return
+        
+        # Proceed to save the image if it should be saved
         try:
             image_path = os.path.join(self.output_dir, f'{self.image_counter}.jpg')
             image.save(image_path)
