@@ -9,10 +9,10 @@ import time
 import subprocess
 import PIL
 
+from .open_waters import predict_ros_adaptation
+
 username = os.environ.get('USERNAME') or os.environ.get('USER') or os.environ.get('LOGNAME') # Get the username of the current user
-import sys
-sys.path.append(f'/home/{username}/ros2_ws/src/wasr_deploy')
-import predict_ros_adaptation
+
 
 class ImageSaver(Node):
     def __init__(self):
@@ -48,7 +48,7 @@ class ImageSaver(Node):
         
     def process_image(self, image):
         start = time.time()
-        predict_ros_adaptation.predict(image, f"out-{self.image_counter}.jpg") # Call the function that will process the image
+        predict_ros_adaptation.predict(image, f"{self.output_dir}/out-{self.image_counter}.jpg") # Call the function that will process the image
         end = time.time()
         elapsed = end - start
         self.get_logger().info(f"Inference time (image {self.image_counter}): {elapsed:.2f}s\n") # Show the time it took to process the image
