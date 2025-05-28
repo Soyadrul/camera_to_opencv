@@ -76,14 +76,28 @@ def generate_launch_description():
         composable_node_descriptions=composable_nodes,
     )
     
+    # parameter to choose if the images (processed by the CV algorithm) should be saved or not
+    save_image_arg = DeclareLaunchArgument(
+        'save_image',
+        default_value='False',
+        description='Enable or disable image saving'
+    )
+    
+    # the node calling the CV algorithm
+    image_saver_node = Node(
+        package='image_saver',
+        executable='image_saver',
+        name='image_saver_node',
+        output='screen',
+        parameters=[{
+            'save_image': LaunchConfiguration('save_image')
+        }],
+    )
+    
     return LaunchDescription([
         container,
         camera_launch_arg,
         format_launch_arg,
-        Node(
-            package='image_saver',
-            executable='image_saver',
-            name='image_saver_node',
-            output='screen',
-        ),
+        save_image_arg,
+        image_saver_node,
     ])
